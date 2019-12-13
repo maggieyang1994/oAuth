@@ -7,17 +7,17 @@ const nonce = require('nonce')();
 const querystring = require('querystring');
 const request = require('request-promise');
 const axios = require("axios")
-const url = 'https://0bdd9097.ngrok.io/shopify?shop=maggieTestStore1.myshopify.com'
+const url = 'https://d10fc3aa.ngrok.io/shopify?shop=maggieTestStore1.myshopify.com'
 const apiKey = process.env.SHOPIFY_API_KEY;
 const apiSecret = process.env.SHOPIFY_API_SECRET;
 const scopes = 'read_products';
-const forwardingAddress = "https://0bdd9097.ngrok.io"; // Replace this with your HTTPS Forwarding address
+const forwardingAddress = "https://d10fc3aa.ngrok.io"; // Replace this with your HTTPS Forwarding address
 // clientID 和 clientSecret 只是为了让系统知道是谁 访问了我 并不是github的username password
 // Client ID 和 Client secret 就是这个应用的身份识别码
 // 是用户自己生成的
 const clientID = 'Iv1.dce8fb1c57aacde3';
 const clientSecret = '1ac7d5971c4adb466af6177d3cbd28ba197b6135'
-const githubUrl = "https://github.com/login/oauth/authorize?client_id=Iv1.dce8fb1c57aacde3&redirect_uri=https://0bdd9097.ngrok.io/github/callback"
+const githubUrl = "https://github.com/login/oauth/authorize?client_id=Iv1.dce8fb1c57aacde3&redirect_uri=https://d10fc3aa.ngrok.io/github/callback"
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
@@ -50,7 +50,28 @@ app.get('/github/callback',async(req, res) => {
     }
   });
   console.log(result.data);
-  const name = result.data.name;
+  const name = result.data.login;
+  // res.send('you username ' + name)
+  // create issue
+  await axios({
+    method: 'post',
+    url: `https://api.github.com/repos/${name}/hexo-theme-os/issues`,
+    headers: {
+      accept: 'application/vnd.github.symmetra-preview+json',
+      Authorization: `token ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    data: JSON.stringify({
+      "title": "JUST FOR TEST",
+      "body": "I'm having a problem with this."
+    })
+  }).then(re => {
+    console.log(re);
+    res.send('create sucess')
+  }).catch(e => {
+    console.log(e);
+    res.send(e)
+  })
   // axios.post({
   //   url: "https://github.com/login/oauth/access_token"
   // })
