@@ -7,31 +7,41 @@ const nonce = require('nonce')();
 const querystring = require('querystring');
 const request = require('request-promise');
 const axios = require("axios")
-const url = 'https://d10fc3aa.ngrok.io/shopify?shop=maggieTestStore1.myshopify.com'
+const url = 'https://bc9d6ece.ngrok.io/shopify?shop=maggieTestStore1.myshopify.com'
 const apiKey = process.env.SHOPIFY_API_KEY;
 const apiSecret = process.env.SHOPIFY_API_SECRET;
 const scopes = 'read_products';
-const forwardingAddress = "https://d10fc3aa.ngrok.io"; // Replace this with your HTTPS Forwarding address
+const forwardingAddress = "https://bc9d6ece.ngrok.io"; // Replace this with your HTTPS Forwarding address
+// clientid 和 secrect是developer在系统申请的  相当于备案
+// 如果是public app  所有人都可以用
+// private app  only申请人可用
 // clientID 和 clientSecret 只是为了让系统知道是谁 访问了我 并不是github的username password
 // Client ID 和 Client secret 就是这个应用的身份识别码
-// 是用户自己生成的
-const clientID = 'Iv1.dce8fb1c57aacde3';
-const clientSecret = '1ac7d5971c4adb466af6177d3cbd28ba197b6135'
-const githubUrl = "https://github.com/login/oauth/authorize?client_id=Iv1.dce8fb1c57aacde3&redirect_uri=https://d10fc3aa.ngrok.io/github/callback"
+// 是开发者（public app） 系统用户（private app）
+
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
-app.get('/github', (req, res) => {
-  console.log(req.query)
+app.get("/github", function (req, res) {
+  // oAuth app 和 github app的区别  oAuth app 权限带在url中    github app直接创建的时候 设置
+  // An OAuth App acts as a GitHub user, whereas a GitHub App uses its own identity
+  // A GitHub App can act on its own behalf, oAuth app is impersonating user
+  const redirectUri = forwardingAddress + '/github/callback';
+  const installUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUTAUTH_API_KEY}&redirect_uri=${redirectUri}&scope=repo`
+  // 要求用户登录  登陆成功 之后调到 redirectUri
+  res.redirect(installUrl);
+
 })
-app.get('/github/callback',async(req, res) => {
+app.get('/github/callback', async (req, res) => {
   console.log(req.query);
   let requestToken = req.query.code;
+  // clientSecret在后台使用  更加安全
   const tokenResponse = await axios({
     method: 'post',
     url: 'https://github.com/login/oauth/access_token?' +
-      `client_id=${clientID}&` +
-      `client_secret=${clientSecret}&` +
+      `client_id=${process.env.GITHUTAUTH_API_KEY}&` +
+      `client_secret=${process.env.GITHUTAUTH_API_SECRET}&` +
       `code=${requestToken}`,
     headers: {
       accept: 'application/json'
@@ -50,7 +60,8 @@ app.get('/github/callback',async(req, res) => {
     }
   });
   console.log(result.data);
-  const name = result.data.login;
+  // const name = result.data.login;
+  let name = 'zowiegong'
   // res.send('you username ' + name)
   // create issue
   await axios({
@@ -72,12 +83,6 @@ app.get('/github/callback',async(req, res) => {
     console.log(e);
     res.send(e)
   })
-  // axios.post({
-  //   url: "https://github.com/login/oauth/access_token"
-  // })
-})
-app.get('/github/webhook', (req, res) => {
-  console.log(req.query)
 })
 app.get('/shopify', (req, res) => {
   const shop = req.query.shop;
